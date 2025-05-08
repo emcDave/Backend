@@ -1,0 +1,17 @@
+export enum MedicineType {
+  TABLET = "TABLET",
+  CAPSULE = "CAPSULE",
+  LIQUID = "LIQUID",
+  INJECTION = "INJECTION",
+  CREAM = "CREAM",
+  DROPS = "DROPS",
+  INHALER = "INHALER",
+  OTHER = "OTHER",
+}
+
+export enum FoodRelation {
+  BEFORE_FOOD = "BEFORE_FOOD",
+  AFTER_FOOD = "AFTER_FOOD",
+  WITH_FOOD = "WITH_FOOD",
+  ANY_TIME = "ANY_TIME",
+}
