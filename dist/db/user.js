@@ -36,46 +36,59 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv = __importStar(require("dotenv"));
-const express_1 = __importDefault(require("express"));
-const http_1 = __importDefault(require("http"));
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const cors_1 = __importDefault(require("cors"));
+exports.setSuperAdmin = exports.UserModel = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const morgan_1 = __importDefault(require("morgan"));
-const router_1 = __importDefault(require("./router"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const dotenv = __importStar(require("dotenv"));
 dotenv.config();
-const user_1 = require("./db/user");
-const app = (0, express_1.default)();
-app.use((0, morgan_1.default)("dev"));
-app.use((0, cors_1.default)({
-    origin: [
-        "http://localhost:5173",
-        "https://rams-sdaves3202-gmailcoms-projects.vercel.app/",
-    ],
-    credentials: true,
-}));
-app.use(express_1.default.json());
-app.use((0, cookie_parser_1.default)());
-const server = http_1.default.createServer(app);
-const port = process.env.PORT || 8080;
-server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-});
-const MONGO_URL = process.env.MONGODB_URL;
-if (!MONGO_URL)
-    throw Error("missing mongo connection string");
-mongoose_1.default.Promise = Promise;
-mongoose_1.default.connect(MONGO_URL);
-mongoose_1.default.connection.on("error", (error) => {
-    console.log(error);
-});
-mongoose_1.default.connection.on("connected", () => {
-    console.log("Mongo Database connected");
-    (0, user_1.setSuperAdmin)();
-    app.use("/", (0, router_1.default)());
-});
-mongoose_1.default.connection.on("disconnected", () => {
-    console.log("Mongo Database disconnected");
-});
-//# sourceMappingURL=index.js.map
+const UserSchema = new mongoose_1.default.Schema({
+    name: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        match: [
+            /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            "must be a valid email address",
+        ],
+    },
+    password: {
+        type: String,
+        minLength: 8,
+        required: true,
+        select: false,
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
+}, { timestamps: true });
+exports.UserModel = mongoose_1.default.model("User", UserSchema);
+const setSuperAdmin = async () => {
+    const ADMIN_NAME = process.env.ADMIN_NAME;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    const salt_rounds = 10;
+    try {
+        if (!ADMIN_NAME)
+            throw Error("ADMIN_NAME not set");
+        const hash = await bcrypt_1.default.genSalt(salt_rounds).then((salt) => {
+            if (!ADMIN_PASSWORD)
+                throw Error("ADMIN_PASSWORD not set");
+            return bcrypt_1.default.hash(ADMIN_PASSWORD, salt);
+        });
+        await exports.UserModel.findOneAndReplace({}, {
+            name: ADMIN_NAME,
+            password: hash,
+            isAdmin: true,
+        }, { upsert: true });
+        console.log("admin initialised");
+    }
+    catch (error) {
+        console.log(error);
+    }
+};
+exports.setSuperAdmin = setSuperAdmin;
+//# sourceMappingURL=user.js.map
