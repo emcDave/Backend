@@ -16,10 +16,7 @@ app.use(morgan("dev"));
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://rams-sdaves3202-gmailcoms-projects.vercel.app/",
-    ],
+    origin: "https://rams-nine.vercel.app",
     credentials: true,
   })
 );
